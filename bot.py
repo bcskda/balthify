@@ -5,11 +5,11 @@ from telegram.ext import Updater, CommandHandler
 
 class NotifyBot:
     def __init__(self, token, chat_id):
-        self._updater = Updater(token=token)
+        self.updater = Updater(token=token)
         self.chat_id = int(chat_id)
 
     def report(self, text):
-        self._updater.bot.send_message(self.chat_id, text)
+        self.updater.bot.send_message(self.chat_id, text)
 
 class NiceNotifyBot(NotifyBot):
     def report_connect(self, addr, app):
