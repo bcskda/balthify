@@ -9,7 +9,7 @@ from functools import partial
 from tornado.web import Application, RequestHandler, MissingArgumentError
 from logs import get_logger
 from bot import NiceNotifyBot
-from guardian import Guardian
+from guard import Guard
 
 DEFAULT_PORT = 8888
 
@@ -95,7 +95,7 @@ class PublishHandler(BaseHandler):
         else:
             self.send_error(self.ST_REJECT)
 
-def make_app(auth_path, bot: NiceNotifyBot, guard: Guardian):
+def make_app(auth_path, bot: NiceNotifyBot, guard: Guard):
     def make_handler(pair):
         method, handler = pair
         return (

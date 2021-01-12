@@ -3,9 +3,9 @@ Decides to accept/reject RTMP streams
 '''
 from logs import get_logger
 
-class Guardian:
+class Guard:
     def __init__(self):
-        self.logger = get_logger('guardian')
+        self.logger = get_logger('guard')
 
     def check_publish(self, addr, app, name):
         '''True = accept publish, False = reject'''

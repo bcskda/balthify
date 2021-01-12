@@ -2,7 +2,7 @@
 import os
 from signal import signal, SIGINT, SIGTERM
 from tornado.ioloop import IOLoop
-from guardian import Guardian
+from guard import Guard
 from bot import NiceNotifyBot
 from listener import make_app, DEFAULT_PORT
 
@@ -25,7 +25,7 @@ def main():
     auth_path = os.environ['BALTHIFY_AUTH_PATH']
     bot = NiceNotifyBot(os.environ['BALTHIFY_TOKEN'],
                         os.environ['BALTHIFY_CHAT_ID'])
-    guard = Guardian()
+    guard = Guard()
     port = int(os.environ.get('BALTHIFY_LISTEN_PORT') or DEFAULT_PORT)
     app = make_app(auth_path, bot, guard)
 
