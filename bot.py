@@ -8,8 +8,19 @@ class NotifyBot:
         self.updater = Updater(token=token)
         self.chat_id = int(chat_id)
 
-    def report(self, text):
+    def report_unsafe(self, text):
+        '''Call bot.send_message from this thread'''
         self.updater.bot.send_message(self.chat_id, text)
+
+    def report(self, text):
+        '''Schedule sync-ed bot.send_message'''
+        job_queue = self.updater.job_queue
+        job_queue.run_once(self._report_callback, when=0, context=text)
+
+    def _report_callback(self, callback_ctx):
+        '''Runs in _updater thread'''
+        text = callback_ctx.job.context
+        self.report_unsafe(text)
 
 class NiceNotifyBot(NotifyBot):
     def report_connect(self, addr, app):
