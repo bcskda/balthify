@@ -6,16 +6,18 @@ from tornado.ioloop import IOLoop
 from guard import Guard
 from notify import NiceNotifier
 from listener import make_app, DEFAULT_PORT
+from logs import get_logger
 
 STOP_SIGNALS = [SIGINT, SIGTERM]
+
+logger = get_logger('main')
 
 def prepare_signals():
     def stop_ioloop(signo):
         IOLoop.current().stop()
-        print(f'Stopped IOLoop on signal {signo}')
 
     def stop_on_signal(signo, frame):
-        print(f'Stopping IOLoop on signal {signo}')
+        logger.info('Stopping IOLoop on signal %s', signo)
         # Sync-edly request IOLoop stop
         IOLoop.current().add_callback_from_signal(stop_ioloop, signo)
 
@@ -34,7 +36,9 @@ def main():
     app.listen(port)
     updater.start_polling()
     IOLoop.current().start() # Will be stopped by signal handler
+    logger.info('Stopped IOLoop')
     updater.stop()
+    logger.info('Stopped Updater')
 
 if __name__ == '__main__':
     main()
