@@ -8,7 +8,7 @@ See https://github.com/arut/nginx-rtmp-module/wiki/Directives#notify
 from functools import partial
 from tornado.web import Application, RequestHandler, MissingArgumentError
 from logs import get_logger
-from bot import NiceNotifyBot
+from notify import NiceNotifier
 from guard import Guard
 
 DEFAULT_PORT = 8888
@@ -63,12 +63,12 @@ class BaseHandler(ModRtmpConst, RequestHandler):
         ))
 
 class ConnectHandler(BaseHandler):
-    def initialize(self, bot, guard):
+    def initialize(self, notifier, guard):
         super(ConnectHandler, self).initialize(
             'connect',
             get_logger('listen.on_connect')
         )
-        self.bot = bot
+        self.notifier = notifier
         self.guard = guard
 
     def post_validated(self, addr, app):
@@ -79,29 +79,29 @@ class ConnectHandler(BaseHandler):
             self.send_error(self.ST_REJECT)
 
 class PublishHandler(BaseHandler):
-    def initialize(self, bot, guard):
+    def initialize(self, notifier, guard):
         super(PublishHandler, self).initialize(
             'publish',
             get_logger('listen.on_publish')
         )
-        self.bot = bot
+        self.notifier = notifier
         self.guard = guard
 
     def post_validated(self, addr, app, name):
         self.logger.debug('addr=%s, app=%s, name=%s', addr, app, name)
         if self.guard.check_publish(addr, app, name):
             self.set_status(self.ST_ACCEPT)
-            self.bot.report_publish(addr, app, name)
+            self.notifier.report_publish(addr, app, name)
         else:
             self.send_error(self.ST_REJECT)
 
-def make_app(auth_path, bot: NiceNotifyBot, guard: Guard):
+def make_app(auth_path, notifier: NiceNotifier, guard: Guard):
     def make_handler(pair):
         method, handler = pair
         return (
             auth_path + f'/on_{method}',
             handler,
-            dict(bot=bot, guard=guard)
+            dict(notifier=notifier, guard=guard)
         )
     
     routes = [
@@ -109,16 +109,3 @@ def make_app(auth_path, bot: NiceNotifyBot, guard: Guard):
         ('publish', PublishHandler),
     ]
     return Application(list(map(make_handler, routes)))
-
-#def main():
-#    logger = get_logger(__name__)
-#    auth_path = os.environ['BALTHIFY_AUTH_PATH']
-#    bot = NiceNotifyBot(os.environ['BALTHIFY_TOKEN'],
-#                        os.environ['BALTHIFY_CHAT_ID'])
-#    port = int(os.environ.get('BALTHIFY_LISTEN_PORT') or DEFAULT_PORT)
-#    app = make_app(auth_path, bot)
-#    app.listen(port)
-#    IOLoop.current().start()
-#
-#if __name__ == '__main__':
-#    main()

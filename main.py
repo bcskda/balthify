@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 import os
 from signal import signal, SIGINT, SIGTERM
+from telegram.ext import Updater
 from tornado.ioloop import IOLoop
 from guard import Guard
-from bot import NiceNotifyBot
+from notify import NiceNotifier
 from listener import make_app, DEFAULT_PORT
 
 STOP_SIGNALS = [SIGINT, SIGTERM]
@@ -23,17 +24,17 @@ def prepare_signals():
 
 def main():
     auth_path = os.environ['BALTHIFY_AUTH_PATH']
-    bot = NiceNotifyBot(os.environ['BALTHIFY_TOKEN'],
-                        os.environ['BALTHIFY_CHAT_ID'])
+    updater = Updater(token=os.environ['BALTHIFY_TOKEN'])
+    notifier = NiceNotifier(updater, os.environ['BALTHIFY_CHAT_ID'])
     guard = Guard()
     port = int(os.environ.get('BALTHIFY_LISTEN_PORT') or DEFAULT_PORT)
-    app = make_app(auth_path, bot, guard)
+    app = make_app(auth_path, notifier, guard)
 
     prepare_signals()
     app.listen(port)
-    bot.updater.start_polling()
+    updater.start_polling()
     IOLoop.current().start() # Will be stopped by signal handler
-    bot.updater.stop()
+    updater.stop()
 
 if __name__ == '__main__':
     main()

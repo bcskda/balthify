@@ -1,11 +1,12 @@
 '''
-Notification bot with python-telegram-bot API
+Bot's notification feature
 '''
-from telegram.ext import Updater, CommandHandler
+from telegram.ext import Updater
 
-class NotifyBot:
-    def __init__(self, token, chat_id):
-        self.updater = Updater(token=token)
+class SafeNotifier:
+    '''Lightweight thread-safe notifier impl'''
+    def __init__(self, updater: Updater, chat_id):
+        self.updater = updater
         self.chat_id = int(chat_id)
 
     def report_unsafe(self, text):
@@ -22,10 +23,12 @@ class NotifyBot:
         text = callback_ctx.job.context
         self.report_unsafe(text)
 
-class NiceNotifyBot(NotifyBot):
+class NiceNotifier(SafeNotifier):
+    '''Lightweight thread-safe notifier. Holds no ownership.'''
     def report_connect(self, addr, app):
         mesg = '\n'.join([
             'Connect',
+            '',
             f'addr={addr}',
             f'app={app}',
         ])
@@ -34,17 +37,20 @@ class NiceNotifyBot(NotifyBot):
     def report_publish(self, addr, app, name):
         mesg = '\n'.join([
             'Publish',
+            '',
             f'addr={addr}',
             f'app={app}',
             f'name={name}',
         ])
         self.report(mesg)
 
-#def main():
-#    logger = get_logger(__name__)
-#    bot = NotifyBot(os.environ['BALTHIFY_TOKEN'],
-#                    os.environ['BALTHIFY_CHAT_ID'])
-#    bot.report(str(sys.argv))
-#
-#if __name__ == '__main__':
-#    main()
+    def report_schedule(self, title, srv_addr, app, name, start):
+        uri = f'rtmp://{srv_addr}/{app}/{name}'
+        mesg = '\n'.join([
+            'Schedule',
+            '',
+            f'Title: {title}',
+            f'Start: {start}',
+            f'Link: {uri}',
+        ])
+        self.report(mesg)
