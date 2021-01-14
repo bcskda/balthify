@@ -3,10 +3,12 @@ import os
 from signal import signal, SIGINT, SIGTERM
 from telegram.ext import Updater
 from tornado.ioloop import IOLoop
+from db_utils import SafeSessionFactory
 from guard import Guard
 from notify import NiceNotifier
 from listener import make_app, DEFAULT_PORT
 from logs import get_logger
+from scheduler import Scheduler
 
 STOP_SIGNALS = [SIGINT, SIGTERM]
 
@@ -26,9 +28,16 @@ def prepare_signals():
 
 def main():
     auth_path = os.environ['BALTHIFY_AUTH_PATH']
+    chat_id = os.environ['BALTHIFY_CHAT_ID']
+    admin_id = os.environ['BALTHIFY_ADMIN_ID']
     updater = Updater(token=os.environ['BALTHIFY_TOKEN'])
-    notifier = NiceNotifier(updater, os.environ['BALTHIFY_CHAT_ID'])
-    guard = Guard()
+    notifier = NiceNotifier(updater, chat_id)
+    session_factory = SafeSessionFactory(os.environ['BALTHIFY_DB_URI'])
+    scheduler = Scheduler(
+        session_factory, updater,
+        chat_id, admin_id
+    )
+    guard = Guard(session_factory)
     port = int(os.environ.get('BALTHIFY_LISTEN_PORT') or DEFAULT_PORT)
     app = make_app(auth_path, notifier, guard)
 
@@ -39,6 +48,8 @@ def main():
     logger.info('Stopped IOLoop')
     updater.stop()
     logger.info('Stopped Updater')
+    session_factory.shutdown()
+    logger.info('Stopped DB session factory')
 
 if __name__ == '__main__':
     main()
