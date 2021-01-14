@@ -29,14 +29,14 @@ class BaseHandler(ModRtmpConst, RequestHandler):
         self.call_method = call_method
         self.logger = logger
 
-    def post_validated(self, *args):
+    async def post_validated(self, *args):
         '''Implement in subclass; args as in _mod_rtmp_arguments'''
         raise NotImplementedError
 
-    def post(self):
+    async def post(self):
         args = self._validate_args()
         if args:
-            self.post_validated(**args)
+            await self.post_validated(**args)
         else:
             self.send_error(self.ST_INVALID)
 
@@ -71,12 +71,12 @@ class ConnectHandler(BaseHandler):
         self.notifier = notifier
         self.guard = guard
 
-    def post_validated(self, addr, app):
+    async def post_validated(self, addr, app):
         self.logger.debug('addr=%s, app=%s', addr, app)
-        if self.guard.check_connect(addr, app):
-            self.set_status(self.ST_ACCEPT)
-        else:
-            self.send_error(self.ST_REJECT)
+        #if self.guard.check_connect(addr, app):
+        self.set_status(self.ST_ACCEPT)
+        #else:
+        #    self.send_error(self.ST_REJECT)
 
 class PublishHandler(BaseHandler):
     def initialize(self, notifier, guard):
@@ -87,9 +87,9 @@ class PublishHandler(BaseHandler):
         self.notifier = notifier
         self.guard = guard
 
-    def post_validated(self, addr, app, name):
+    async def post_validated(self, addr, app, name):
         self.logger.debug('addr=%s, app=%s, name=%s', addr, app, name)
-        if self.guard.check_publish(addr, app, name):
+        if await self.guard.check_publish_async(addr, app, name):
             self.set_status(self.ST_ACCEPT)
             self.notifier.report_publish(addr, app, name)
         else:
