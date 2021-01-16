@@ -55,7 +55,7 @@ class Guard:
             ).all()
         return cb
 
-    def validate_publish(self, query_result) -> '(app, id) or None':
+    def validate_publish(self, query_result) -> '(app, id, title) or None':
         '''Redirect, or None if invalid'''
         self.logger.debug('publish: match_list=%s', query_result)
         if len(query_result) < 1:
@@ -68,7 +68,7 @@ class Guard:
         row = query_result[0]
         redir_app, redir_id = row.egress_app, row.egress_id
         self.logger.info('publish: redirect to (%s, %s)', redir_app , redir_id)
-        return redir_app, redir_id
+        return redir_app, redir_id, row.title
 
     def log_publish_post(self, addr, app, name, redir):
         if redir:

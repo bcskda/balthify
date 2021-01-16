@@ -34,19 +34,20 @@ class NiceNotifier(SafeNotifier):
         ])
         self.report(mesg)
 
-    def report_publish(self, app, name):
+    def report_publish(self, title, url):
         mesg = '\n'.join([
-            'Publish',
-            '',
-            f'app={app}',
-            f'name={name}',
+            '*Stream starts*',
+            #'',
+            f'Title: {title}',
+            #f'End: {end}',
+            f'Link: {url}',
+            #f'Description: {comment}'
         ])
         self.report(mesg)
 
     def report_schedule(self, title, comment, url, start):
         mesg = '\n'.join([
-            'Schedule',
-            '',
+            '*Stream scheduled*',
             f'Title: {title}',
             f'Start: {start}',
             f'Link: {url}',

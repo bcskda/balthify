@@ -88,12 +88,14 @@ class PublishHandler(BaseHandler):
 
     async def post_validated(self, addr, app, name):
         self.logger.debug('addr=%s, app=%s, name=%s', addr, app, name)
-        redir = await self.guard.check_publish_async(addr, app, name)
-        if redir:
-            redir_app, redir_id = redir
-            self.logger.info('redirect to %s, %s', redir_app, redir_id)
-            self.redirect(Config.redirect_template.format(redir_app, redir_id))
-            self.notifier.report_publish(redir_app, redir_id)
+        redir_info = await self.guard.check_publish_async(addr, app, name)
+        if redir_info:
+            redir_app, redir_id, title = redir_info[:3]
+            self.logger.info('redirect to (%s, %s)', redir_app, redir_id)
+            redirect_url = Config.redirect_template.format(redir_app, redir_id)
+            access_url = Config.access_template.format(redir_app, redir_id)
+            self.redirect(redirect_url)
+            self.notifier.report_publish(title, access_url)
         else:
             self.send_error(self.ST_REJECT)
 
