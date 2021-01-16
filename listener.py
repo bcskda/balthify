@@ -10,10 +10,7 @@ from tornado.web import Application, RequestHandler, MissingArgumentError
 from logs import get_logger
 from notify import NiceNotifier
 from guard import Guard
-
-DEFAULT_PORT = 8888
-
-REDIRECT_TMPL = 'rtmp://127.0.0.1:19350/{}/{}'
+from config import Config
 
 class ModRtmpConst:
     ST_ACCEPT = 200
@@ -95,7 +92,7 @@ class PublishHandler(BaseHandler):
         if redir:
             redir_app, redir_id = redir
             self.logger.info('redirect to %s, %s', redir_app, redir_id)
-            self.redirect(REDIRECT_TMPL.format(redir_app, redir_id))
+            self.redirect(Config.redirect_template.format(redir_app, redir_id))
             self.notifier.report_publish(redir_app, redir_id)
         else:
             self.send_error(self.ST_REJECT)

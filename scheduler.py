@@ -9,6 +9,7 @@ from telegram.ext import Updater, CallbackContext, CommandHandler
 from db_models import RoutingRecord
 from notify import NiceNotifier
 from logs import get_logger
+from config import Config
 
 logger = get_logger('scheduler')
 
@@ -29,9 +30,9 @@ class Scheduler:
         title, start, end = ctx.args[:3]
         description = ' '.join(ctx.args[3:])
         record = dict(
-            ingress_app='publish',
+            ingress_app=Config.ingress_app,
             ingress_id=self._random_id(12),
-            egress_app='play',
+            egress_app=Config.egress_app,
             egress_id=self._random_id(12),
             start_time=datetime.fromisoformat(start),
             end_time=datetime.fromisoformat(end),
@@ -40,9 +41,22 @@ class Scheduler:
         )
         self.s_session.apply(self._make_insert_record(record)) \
             .result()
+        publish_url = Config.access_template.format(
+            record['ingress_app'], record['ingress_id']
+        )
+        watch_url = Config.access_template.format(
+            record['egress_app'], record['egress_id']
+        )
+        update.message.reply_text('\n'.join([
+            'Stream scheduled',
+            'Uplink url:',
+            publish_url,
+            'Watch url:',
+            watch_url
+        ]))
         self.notifier.report_schedule(
-            record['title'], 'balthasar', record['egress_app'],
-            record['egress_id'], record['start_time']
+            record['title'], record['description'],
+            watch_url, record['start_time']
         )
 
     @staticmethod

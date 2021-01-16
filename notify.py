@@ -34,23 +34,22 @@ class NiceNotifier(SafeNotifier):
         ])
         self.report(mesg)
 
-    def report_publish(self, addr, app, name):
+    def report_publish(self, app, name):
         mesg = '\n'.join([
             'Publish',
             '',
-            f'addr={addr}',
             f'app={app}',
             f'name={name}',
         ])
         self.report(mesg)
 
-    def report_schedule(self, title, srv_addr, app, name, start):
-        uri = f'rtmp://{srv_addr}/{app}/{name}'
+    def report_schedule(self, title, comment, url, start):
         mesg = '\n'.join([
             'Schedule',
             '',
             f'Title: {title}',
             f'Start: {start}',
-            f'Link: {uri}',
+            f'Link: {url}',
+            f'Description: {comment}'
         ])
         self.report(mesg)
