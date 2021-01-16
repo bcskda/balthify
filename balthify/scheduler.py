@@ -6,10 +6,10 @@ import itertools
 import secrets
 import string
 from telegram.ext import Updater, CallbackContext, CommandHandler
-from db_models import RoutingRecord
-from notify import NiceNotifier
-from logs import get_logger
-from config import Config
+from balthify.config import Config
+from balthify.db_models import RoutingRecord
+from balthify.logs import get_logger
+from balthify.notify import NiceNotifier
 
 logger = get_logger('scheduler')
 

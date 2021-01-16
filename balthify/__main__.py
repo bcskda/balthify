@@ -2,13 +2,13 @@
 from signal import signal, SIGINT, SIGTERM
 from telegram.ext import Updater
 from tornado.ioloop import IOLoop
-from db_utils import SafeSessionFactory
-from guard import Guard
-from notify import NiceNotifier
-from listener import make_app
-from logs import get_logger
-from scheduler import Scheduler
-from config import Config
+from balthify.config import Config
+from balthify.db_utils import SafeSessionFactory
+from balthify.guard import Guard
+from balthify.listener import make_app
+from balthify.logs import get_logger
+from balthify.notify import NiceNotifier
+from balthify.scheduler import Scheduler
 
 STOP_SIGNALS = [SIGINT, SIGTERM]
 

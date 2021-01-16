@@ -7,10 +7,10 @@ See https://github.com/arut/nginx-rtmp-module/wiki/Directives#notify
 '''
 from functools import partial
 from tornado.web import Application, RequestHandler, MissingArgumentError
-from logs import get_logger
-from notify import NiceNotifier
-from guard import Guard
-from config import Config
+from balthify.config import Config
+from balthify.guard import Guard
+from balthify.logs import get_logger
+from balthify.notify import NiceNotifier
 
 class ModRtmpConst:
     ST_ACCEPT = 200
