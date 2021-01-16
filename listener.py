@@ -13,6 +13,8 @@ from guard import Guard
 
 DEFAULT_PORT = 8888
 
+REDIRECT_TMPL = 'rtmp://127.0.0.1:19350/{}/{}'
+
 class ModRtmpConst:
     ST_ACCEPT = 200
     ST_INVALID = 400
@@ -89,9 +91,12 @@ class PublishHandler(BaseHandler):
 
     async def post_validated(self, addr, app, name):
         self.logger.debug('addr=%s, app=%s, name=%s', addr, app, name)
-        if await self.guard.check_publish_async(addr, app, name):
-            self.set_status(self.ST_ACCEPT)
-            self.notifier.report_publish(addr, app, name)
+        redir = await self.guard.check_publish_async(addr, app, name)
+        if redir:
+            redir_app, redir_id = redir
+            self.logger.info('redirect to %s, %s', redir_app, redir_id)
+            self.redirect(REDIRECT_TMPL.format(redir_app, redir_id))
+            self.notifier.report_publish(redir_app, redir_id)
         else:
             self.send_error(self.ST_REJECT)
 

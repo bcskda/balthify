@@ -1,8 +1,10 @@
 '''
 Decides to accept/reject RTMP streams
 '''
+from datetime import datetime
 import functools
-from db_models import ScheduledStream
+from sqlalchemy import between
+from db_models import RoutingRecord
 from db_utils import SafeSessionFactory
 from logs import get_logger
 
@@ -19,9 +21,9 @@ class Guard:
             s_session = self.s_factory('future')
             query_cb = self.query_publish(*args, **kwargs)
             query_result = s_session.apply(query_cb).result()
-            ok = self.validate_publish(query_result)
-            self.log_publish_post(*args, **kwargs, granted=ok)
-            return ok
+            redir = self.validate_publish(query_result)
+            self.log_publish_post(*args, **kwargs, redir=redir)
+            return redir
         except Exception as e:
             logger.exception('publish: unhandled exception: %s', e)
             return False
@@ -32,9 +34,9 @@ class Guard:
             s_session = self.s_factory('asyncio')
             query_cb = self.query_publish(*args, **kwargs)
             query_result = await s_session.apply(query_cb)
-            ok = self.validate_publish(query_result)
-            self.log_publish_post(*args, **kwargs, granted=ok)
-            return ok
+            redir = self.validate_publish(query_result)
+            self.log_publish_post(*args, **kwargs, redir=redir)
+            return redir
         except Exception as e:
             self.logger.exception('publish: unhandled exception: %s', e)
             return False
@@ -45,18 +47,32 @@ class Guard:
     @staticmethod
     def query_publish(addr, app, name):
         def cb(session):
-            return session.query(ScheduledStream).filter_by(
-                ingress_app=app, ingress_id=name
+            now = datetime.now()
+            return session.query(RoutingRecord).filter(
+                RoutingRecord.start_time <= now,
+                now < RoutingRecord.end_time,
+                RoutingRecord.ingress_app == app,
+                RoutingRecord.ingress_id == name,
             ).all()
         return cb
 
-    def validate_publish(self, query_result):
-        self.logger.info('publish: match_list=%s', query_result)
-        self.logger.warning('publish: unconditional accept')
-        return True
+    def validate_publish(self, query_result) -> '(app, id) or None':
+        '''Redirect, or None if invalid'''
+        self.logger.debug('publish: match_list=%s', query_result)
+        if len(query_result) < 1:
+            self.logger.info('publish: unregistered stream')
+            return None
+        if len(query_result) > 1:
+            ids = map(lambda r: r['routing_id'], query_result.fetchall())
+            self.logger.warning('publish: streams overlap: %s', list(ids))
+            return None
+        row = query_result[0]
+        redir_app, redir_id = row.egress_app, row.egress_id
+        self.logger.info('publish: redirect to (%s, %s)', redir_app , redir_id)
+        return redir_app, redir_id
 
-    def log_publish_post(self, addr, app, name, granted):
-        if granted:
+    def log_publish_post(self, addr, app, name, redir):
+        if redir:
             self.logger.info('publish granted: addr=%s app=%s name=%s',
                              addr, app, name)
         else:
