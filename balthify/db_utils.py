@@ -24,9 +24,10 @@ class SafeSessionFactory:
         return self.SAFE_CLASSES[kind](self.session, self.executor)
 
     def shutdown(self):
-        logger.info('%s: shutting down sessions', id(self))
+        logger.debug('shutting down sessions')
         self.executor.submit(self.session.close).result()
-        logger.info('%s: shut down sessions', id(self))
-        logger.info('%s: shutting down executor', id(self))
+        logger.debug('shut down sessions')
+        logger.debug('shutting down executor')
         self.executor.shutdown()
-        logger.info('%s: shut down executor', id(self))
+        logger.debug('shut down executor')
+        logger.info('shut down id={}'.format(id(self)))

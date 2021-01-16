@@ -9,7 +9,7 @@ from balthify.logs import get_logger
 
 class Guard:
     def __init__(self, session_factory: SafeSessionFactory):
-        self.logger = get_logger('guard {}'.format(id(self)))
+        self.logger = get_logger('guard')
         self.s_factory = session_factory
 
     # Publish event
