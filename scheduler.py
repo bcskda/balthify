@@ -2,9 +2,15 @@
 Bot's scheduler feature
 '''
 from datetime import datetime
+import itertools
+import secrets
+import string
 from telegram.ext import Updater, CallbackContext, CommandHandler
-from db_models import ScheduledStream
+from db_models import RoutingRecord
 from notify import NiceNotifier
+from logs import get_logger
+
+logger = get_logger('scheduler')
 
 class Scheduler:
     def __init__(self, session_factory, updater, chat_id, admin_id):
@@ -16,20 +22,40 @@ class Scheduler:
         dispatcher.add_handler(CommandHandler('schedule', self.on_schedule))
 
     def on_schedule(self, update, ctx: CallbackContext):
-        title, start, ingress_id = ctx.args[:3]
-        start = datetime.fromisoformat(start)
-        egress_app = 'test_app_egress'
-        egress_id = 'random_egress_id'
-        new_item = ScheduledStream(
-            ingress_app='secret_app',
-            ingress_id=ingress_id,
-            egress_app=egress_app,
-            egress_id=egress_id,
-            start_time=start
+        if update.effective_chat.id != self.admin_id:
+            logger.info('ignoring unauthorized command: chat_id=%s args=%s',
+                        update.effective_chat.id, ctx.args)
+            return
+        title, start, end = ctx.args[:3]
+        description = ' '.join(ctx.args[3:])
+        record = dict(
+            ingress_app='publish',
+            ingress_id=self._random_id(12),
+            egress_app='play',
+            egress_id=self._random_id(12),
+            start_time=datetime.fromisoformat(start),
+            end_time=datetime.fromisoformat(end),
+            description=description,
+            title=title
         )
-        self.s_session.apply(
-            lambda session: session.add(new_item)
-        ).result()
+        self.s_session.apply(self._make_insert_record(record)) \
+            .result()
         self.notifier.report_schedule(
-            title, 'rtmp://balthasar', egress_app, egress_id, start
+            record['title'], 'balthasar', record['egress_app'],
+            record['egress_id'], record['start_time']
         )
+
+    @staticmethod
+    def _make_insert_record(record_kwargs):
+        def act(session):
+            session.add(RoutingRecord(**record_kwargs))
+            session.commit()
+        return act
+
+    @staticmethod
+    def _random_id(length: int) -> str:
+        _ID_CHARSET = string.ascii_lowercase + string.digits
+        return ''.join(map(
+            secrets.choice,
+            itertools.repeat(_ID_CHARSET, length)
+        ))
