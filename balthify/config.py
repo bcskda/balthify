@@ -22,9 +22,10 @@ class Config:
     ingress_app = _get('APP_INGRESS')
     egress_app = _get('APP_EGRESS')
     rtmp_port = int(_get_or_none('RTMP_PORT') or DEFAULT_RTMP_PORT)
-    rtmp_addr = _get('RTMP_ADDR')
+    rtmp_ext_host = _get('RTMP_EXT_HOST')
+    rtmp_ext_port = int(_get_or_none('RTMP_EXT_PORT') or DEFAULT_RTMP_PORT)
     
     redirect_template = 'rtmp://127.0.0.1:{}/{{}}/{{}}'.format(rtmp_port)
-    access_template = 'rtmp://{}:{}/{{}}/{{}}'.format(rtmp_addr, rtmp_port)
+    access_template = 'rtmp://{}:{}/{{}}/{{}}'.format(rtmp_ext_host, rtmp_ext_port)
     
     loglevel = getattr(logging, _get_or_none('LOGLEVEL') or 'DEBUG')
