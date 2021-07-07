@@ -14,16 +14,17 @@ from balthify.notify import NiceNotifier
 logger = get_logger('scheduler')
 
 class Scheduler:
-    def __init__(self, session_factory, updater, chat_id, admin_id):
+    def __init__(self, session_factory, updater, chat_id, admin_ids):
         self.s_session = session_factory('future')
         self.updater = updater
         self.notifier = NiceNotifier(updater, chat_id)
-        self.admin_id = int(admin_id)
+        self.admin_ids = frozenset(map(int, admin_ids))
         dispatcher = self.updater.dispatcher
         dispatcher.add_handler(CommandHandler('schedule', self.on_schedule))
 
     def on_schedule(self, update, ctx: CallbackContext):
-        if update.effective_chat.id != self.admin_id:
+        chat_id = update.effective_chat.id
+        if chat_id not in self.admin_ids:
             logger.info('ignoring unauthorized command: chat_id=%s args=%s',
                         update.effective_chat.id, ctx.args)
             return

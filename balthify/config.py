@@ -14,7 +14,7 @@ class Config:
     listen_port = int(_get_or_none('LISTEN_PORT') or DEFAULT_LISTEN_PORT)
     
     chat_id = _get('CHAT_ID')
-    admin_id = _get('ADMIN_ID')
+    admin_ids = _get('ADMIN_IDS').split(',')
     tg_token = _get('TOKEN')
     
     db_uri = _get('DB_URI')

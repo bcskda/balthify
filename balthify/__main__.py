@@ -31,7 +31,7 @@ def main():
     session_factory = SafeSessionFactory(Config.db_uri)
     scheduler = Scheduler(
         session_factory, updater,
-        Config.chat_id, Config.admin_id
+        Config.chat_id, Config.admin_ids
     )
     app = make_app(
         Config.auth_path,
