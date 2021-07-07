@@ -29,6 +29,10 @@ class Scheduler:
             logger.info('ignoring unauthorized command: chat_id=%s args=%s',
                         update.effective_chat.id, ctx.args)
             return
+        if not update.message:
+            logger.info('likely edited message, ignoring')
+            return
+
         title, start, end = ctx.args[:3]
         description = ' '.join(ctx.args[3:])
         record = dict(
