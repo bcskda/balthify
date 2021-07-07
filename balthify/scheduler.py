@@ -41,6 +41,15 @@ class Scheduler:
             description=description,
             title=title
         )
+        from_user = update.message.from_user
+        try:
+            from_user = '@' + from_user.username
+        except:
+            from_user = from_user.first_name
+
+        logger.info('Permitted schedule command: chat_id={}, sender={}, record={}'.format(
+            chat_id, from_user, record
+        ))
         self.s_session.apply(self._make_insert_record(record)) \
             .result()
         publish_url = Config.access_template.format(

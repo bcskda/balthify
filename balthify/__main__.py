@@ -42,7 +42,9 @@ def main():
     prepare_signals()
     app.listen(Config.listen_port)
     updater.start_polling()
+    IOLoop.current().add_callback(logger.info, 'Started IOLoop')
     IOLoop.current().start() # Will be stopped by signal handler
+
     logger.info('Stopped IOLoop')
     updater.stop()
     logger.info('Stopped Updater')
