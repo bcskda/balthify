@@ -53,7 +53,7 @@ class AwaitableSafeWrapper(BaseSafeWrapper):
     def _teleport(cls, executor, callback):
         '''Throws RuntimeError if not in asyncio loop context.'''
         def wrapped(*args, **kwargs):
-            return asyncio.get_running_loop().run_in_executor(
+            return asyncio._get_running_loop().run_in_executor(
                 executor, functools.partial(callback, *args, **kwargs)
             )
 

@@ -5,6 +5,7 @@ from datetime import datetime
 import itertools
 import secrets
 import string
+from dateutil.parser import parse as dateutil_parse
 from telegram.ext import Updater, CallbackContext, CommandHandler
 from balthify.config import Config
 from balthify.db_models import RoutingRecord
@@ -35,8 +36,8 @@ class Scheduler:
             ingress_id=self._random_id(12),
             egress_app=Config.egress_app,
             egress_id=self._random_id(12),
-            start_time=datetime.fromisoformat(start),
-            end_time=datetime.fromisoformat(end),
+            start_time=dateutil_parse(start),
+            end_time=dateutil_parse(end),
             description=description,
             title=title
         )
