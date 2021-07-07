@@ -1,0 +1,15 @@
+[Unit]
+Description=Simple ACL proxy and event scheduler for RTMP
+Requires=network.target
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/srv/balthify
+ExecStart=/srv/balthify/run.sh
+Restart=on-failure
+KillMode=process
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
