@@ -1,10 +1,10 @@
 import logging
 import signal
 
-from telegram.ext import Updater
+from telegram.ext import Updater, CommandHandler
 
 from balthify2.tgbot.config import config
-from balthify2.tgbot.handlers import Handler, Notifier
+from balthify2.tgbot.handlers import ScheduleHandler
 
 
 logger = logging.getLogger('balthify2.tgbot.main')
@@ -20,11 +20,11 @@ def stop_signals():
 def main():
     logging.basicConfig(level=logging.INFO)
 
-    notifier = Notifier()
-    handler = Handler(notifier)
+    handler = ScheduleHandler()
     updater = Updater(token=config().token)
-    for callback in handler.callback_handlers():
-        updater.dispatcher.add_handler(callback)
+    updater.dispatcher.add_handler(
+        CommandHandler('schedule', handler.on_schedule)
+    )
 
     updater.start_polling()
     updater.idle()

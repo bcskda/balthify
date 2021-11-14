@@ -1,34 +1,57 @@
-from datetime import datetime
+import json
 import logging
 import typing as tp
+from datetime import datetime
 
 from dateutil.parser import parse as dateutil_parse
-from telegram.ext import (
-    CallbackContext,
-    CommandHandler,
-    Dispatcher,
-    Updater,
-)
+from telegram.ext import CallbackContext
+from tornado.httpclient import HTTPClient, HTTPRequest
 
-from balthify2.common.models import RoutingRecordUserConfigurable
+from balthify2.common.models import RoutingRecord, RoutingRecordUserConfigurable
 from balthify2.tgbot.config import config
 
 
 logger = logging.getLogger('balthify2.tgbot.handlers')
 
 
-class Notifier:
-    pass
+class ScheduleHandler:
+    class Composer:
+        def __init__(self, record: RoutingRecord):
+            self.record = record
 
+        def shareable_reply(self) -> str:
+            play_url = (
+                config().dataserver_base_url
+                + self.record.egress_app
+                + '/'
+                + self.record.egress_id)
 
-class Handler:
-    def __init__(self, notifier: Notifier):
-        self.notifier = notifier
+            return '\n'.join([
+                'Stream scheduled, forward this message to viewers',
+                '',
+                f'Title: {self.record.title}',
+                f'Start/end: {self.record.start_time} ~ {self.record.end_time}',
+                'Description:',
+                self.record.description,
+                '',
+                'Public play URL:',
+                play_url
+            ])
 
-    def callback_handlers(self) -> tp.List[CommandHandler]:
-        return [
-            CommandHandler('schedule', self.on_schedule),
-        ]
+        def secret_reply(self) -> str:
+            publish_url = (
+                config().dataserver_base_url
+                + self.record.ingress_app
+                + '/'
+                + self.record.ingress_id)
+
+            return '\n'.join([
+                'This message is only for publisher',
+                '',
+                'Publish URL:',
+                publish_url
+            ])
+
 
     def record(self, command_args: tp.List[str]) -> RoutingRecordUserConfigurable:
         title, start_time, end_time = command_args[:3]
@@ -43,6 +66,18 @@ class Handler:
             egress_app=config().egress_app
         )
 
+    def try_schedule(self, record: RoutingRecordUserConfigurable) -> RoutingRecord:
+        client = HTTPClient()
+        response = client.fetch(
+            config().schedule_api_url,
+            method='POST',
+            body=record.json(),
+            headers={
+                'Content-Type': 'application/json'
+            }
+        )
+        return RoutingRecord(**json.loads(response.body))
+
     def on_schedule(self, update, ctx: CallbackContext) -> None:
         chat_id = update.effective_chat.id
         if str(chat_id) not in config().admin_ids:
@@ -54,5 +89,25 @@ class Handler:
             return
         logger.info('Authorized: chat=%s args=%s', chat_id, ctx.args)
 
-        record = self.record(ctx.args)
-        logger.info('Parsed: chat=%s record=%s', chat_id, record)
+        try:
+            record = self.record(ctx.args)
+            logger.info('Parsed: chat=%s record=%s', chat_id, record)
+            record = self.try_schedule(record)
+            logger.info('Scheduled: chat=%s record=%s', chat_id, record)
+            composer = self.Composer(record)
+
+            shareable_text = composer.shareable_reply()
+            shareable_msg = update.message.reply_text(
+                shareable_text,
+                reply_to_message_id=update.effective_message.message_id)
+
+            secret_text = composer.secret_reply()
+            shareable_msg.reply_text(
+                secret_text,
+                reply_to_message_id=shareable_msg.message_id)
+        except Exception as e:
+            logger.exception(
+                'Exception while processing chat_id=%s, args=%s',
+                chat_id,
+                ctx.args)
+            update.message.reply_text(f'Exception: {e}')

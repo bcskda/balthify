@@ -3,7 +3,7 @@ import os
 import typing as tp
 from functools import lru_cache
 
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, AnyUrl, HttpUrl, validator
 
 
 ENV_PREFIX = 'BALTHIFY2_TGBOT_'
@@ -15,7 +15,13 @@ class Config(BaseModel):
     admin_ids: tp.List[str]
     ingress_app: str
     egress_app: str
-    scheduler_api: HttpUrl
+    schedule_api_url: HttpUrl
+    dataserver_base_url: AnyUrl
+
+    @validator('dataserver_base_url')
+    def dataserver_base_url_endswith_slash(cls, v):
+        assert v.endswith('/')
+        return v
 
 
 @lru_cache(maxsize=1)
