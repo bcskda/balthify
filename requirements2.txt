@@ -1,0 +1,7 @@
+aiosqlite
+fastapi
+pydantic
+python-multipart
+python-telegram-bot
+sqlalchemy[asyncio]
+uvicorn[standard]
