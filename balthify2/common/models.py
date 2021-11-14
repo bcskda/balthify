@@ -25,15 +25,13 @@ class RoutingRecordOrm(Base):
     description = Column(String(300), nullable=False)
 
 
-class RoutingRecordBody(BaseModel):
-    ingress_app: constr(max_length=32)
-    ingress_id: constr(max_length=32)
-    egress_app: constr(max_length=32)
-    egress_id: constr(max_length=32)
+class RoutingRecordUserConfigurable(BaseModel):
     start_time: datetime
     end_time: datetime
     title: constr(max_length=100)
     description: constr(max_length=300)
+    ingress_app: constr(max_length=32)
+    egress_app: constr(max_length=32)
 
     @validator('end_time')
     def end_time_after_start_time(cls, v, values):
@@ -46,8 +44,11 @@ class RoutingRecordBody(BaseModel):
         return v
 
 
-class RoutingRecord(RoutingRecordBody):
+class RoutingRecord(RoutingRecordUserConfigurable):
     id: int
+
+    ingress_id: constr(max_length=32)
+    egress_id: constr(max_length=32)
 
     class Config:
         orm_mode = True

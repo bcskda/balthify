@@ -1,3 +1,6 @@
+import base64
+import math
+import os
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, status
@@ -5,13 +8,19 @@ from sqlalchemy import select
 
 from balthify2.common.models import (
     RoutingRecord,
-    RoutingRecordBody,
+    RoutingRecordUserConfigurable,
     RoutingRecordOrm
 )
 from balthify2.schedule.sessions import Sessions
 
 
 router = APIRouter()
+
+
+def random_id(length: int):
+    urandom_bytes = math.ceil(3 / 4 * length)
+    rnd = base64.b64encode(os.urandom(urandom_bytes))
+    return rnd[:length]
 
 
 @router.get('/lookup')
@@ -37,9 +46,15 @@ async def get_record(ingress_app: str, ingress_id: str, timestamp: datetime):
 
 
 @router.post('/')
-async def post_record(record: RoutingRecordBody):
+async def post_record(record: RoutingRecordUserConfigurable):
     async with Sessions.make() as session:
-        record_orm = RoutingRecordOrm(**record.dict())
+        ingress_id = random_id(32)
+        egress_id = random_id(32)
+        record_orm = RoutingRecordOrm(
+            ingress_id=ingress_id,
+            egress_id=egress_id,
+            **record.dict()
+        )
         session.add(record_orm)
         await session.commit()
         return RoutingRecord.from_orm(record_orm)
