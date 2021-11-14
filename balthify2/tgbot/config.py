@@ -3,7 +3,7 @@ import os
 import typing as tp
 from functools import lru_cache
 
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 
 
 ENV_PREFIX = 'BALTHIFY2_TGBOT_'
@@ -13,6 +13,9 @@ ENV_JSON_PATH = ENV_PREFIX + 'JSON_PATH'
 class Config(BaseModel):
     token: str
     admin_ids: tp.List[str]
+    ingress_app: str
+    egress_app: str
+    scheduler_api: HttpUrl
 
 
 @lru_cache(maxsize=1)
