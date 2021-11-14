@@ -11,10 +11,9 @@ from balthify2.common.models import RoutingRecord, RoutingRecordUserConfigurable
 from balthify2.tgbot.config import config
 
 
-logger = logging.getLogger('balthify2.tgbot.handlers')
-
-
 class ScheduleHandler:
+    logger = logging.getLogger('balthify2.tgbot.handlers.schedule')
+
     class Composer:
         def __init__(self, record: RoutingRecord):
             self.record = record
@@ -81,19 +80,19 @@ class ScheduleHandler:
     def on_schedule(self, update, ctx: CallbackContext) -> None:
         chat_id = update.effective_chat.id
         if str(chat_id) not in config().admin_ids:
-            logger.warning('Ignoring unauthorized command: chat=%s args=%s',
+            self.logger.warning('Ignoring unauthorized command: chat=%s args=%s',
                         update.effective_chat.id, ctx.args)
             return
         if not update.message:
-            logger.info('Likely edited message, ignoring: chat=%s', chat_id)
+            self.logger.info('Likely edited message, ignoring: chat=%s', chat_id)
             return
-        logger.info('Authorized: chat=%s args=%s', chat_id, ctx.args)
+        self.logger.info('Authorized: chat=%s args=%s', chat_id, ctx.args)
 
         try:
             record = self.record(ctx.args)
-            logger.info('Parsed: chat=%s record=%s', chat_id, record)
+            self.logger.info('Parsed: chat=%s record=%s', chat_id, record)
             record = self.try_schedule(record)
-            logger.info('Scheduled: chat=%s record=%s', chat_id, record)
+            self.logger.info('Scheduled: chat=%s record=%s', chat_id, record)
             composer = self.Composer(record)
 
             shareable_text = composer.shareable_reply()
@@ -106,7 +105,7 @@ class ScheduleHandler:
                 secret_text,
                 reply_to_message_id=shareable_msg.message_id)
         except Exception as e:
-            logger.exception(
+            self.logger.exception(
                 'Exception while processing chat_id=%s, args=%s',
                 chat_id,
                 ctx.args)
