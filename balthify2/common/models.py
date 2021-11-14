@@ -25,8 +25,7 @@ class RoutingRecordOrm(Base):
     description = Column(String(300), nullable=False)
 
 
-class RoutingRecord(BaseModel):
-    id: tp.Optional[int]
+class RoutingRecordBody(BaseModel):
     ingress_app: constr(max_length=32)
     ingress_id: constr(max_length=32)
     egress_app: constr(max_length=32)
@@ -35,9 +34,6 @@ class RoutingRecord(BaseModel):
     end_time: datetime
     title: constr(max_length=100)
     description: constr(max_length=300)
-
-    class Config:
-        orm_mode = True
 
     @validator('end_time')
     def end_time_after_start_time(cls, v, values):
@@ -50,7 +46,8 @@ class RoutingRecord(BaseModel):
         return v
 
 
-class RoutingRecordByIdsReq(BaseModel):
-    ingress_app: constr(max_length=32)
-    ingress_id: constr(max_length=32)
-    timestamp: datetime
+class RoutingRecord(RoutingRecordBody):
+    id: int
+
+    class Config:
+        orm_mode = True

@@ -5,8 +5,8 @@ from sqlalchemy import select
 
 from balthify2.common.models import (
     RoutingRecord,
-    RoutingRecordOrm,
-    RoutingRecordByIdsReq
+    RoutingRecordBody,
+    RoutingRecordOrm
 )
 from balthify2.schedule.sessions import Sessions
 
@@ -37,12 +37,7 @@ async def get_record(ingress_app: str, ingress_id: str, timestamp: datetime):
 
 
 @router.post('/')
-async def post_record(record: RoutingRecord):
-    if record.id is not None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Record id must not be specified')
-
+async def post_record(record: RoutingRecordBody):
     async with Sessions.make() as session:
         record_orm = RoutingRecordOrm(**record.dict())
         session.add(record_orm)
