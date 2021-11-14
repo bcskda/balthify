@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
 from balthify2.common.models import (
@@ -29,17 +29,19 @@ async def get_record(ingress_app: str, ingress_id: str, timestamp: datetime):
         if len(records_orm) == 1:
             return RoutingRecord.from_orm(records_orm[0])
         elif len(records_orm) == 0:
-            raise HTTPException(status_code=404)
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         else:
             raise HTTPException(
-                status_code=500, detail='Overlapping routing records:')
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='Overlapping routing records')
 
 
 @router.post('/')
 async def post_record(record: RoutingRecord):
     if record.id is not None:
         raise HTTPException(
-            status_code=400, detail='Record if must not be specified')
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Record id must not be specified')
 
     async with Sessions.make() as session:
         record_orm = RoutingRecordOrm(**record.dict())
