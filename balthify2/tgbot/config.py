@@ -15,13 +15,20 @@ class Config(BaseModel):
     admin_ids: tp.List[str]
     ingress_app: str
     egress_app: str
-    schedule_api_url: HttpUrl
+    schedule_api_url: AnyUrl
     dataserver_base_url: AnyUrl
 
     @validator('dataserver_base_url')
     def dataserver_base_url_endswith_slash(cls, v):
         assert v.endswith('/')
         return v
+
+    @validator('admin_ids', pre=True)
+    def maybe_comma_separated(cls, v):
+        if isinstance(v, str):
+            return v.split(',')
+        else:
+            return v
 
 
 @lru_cache(maxsize=1)
