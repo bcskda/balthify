@@ -1,0 +1,42 @@
+version: "3.2"
+services:
+  balthify2_backend:
+    image:
+      balthify2-backend
+    environment:
+      BALTHIFY2_DB_URL: sqlite+aiosqlite:////opt/balthify2/data/testing.db
+    ports:
+      - 8000:8000
+    networks:
+      - common
+    volumes:
+      - type: bind
+        source: ./balthify2-data
+        target: /opt/balthify2/data
+  balthify2_tgbot:
+    image:
+      balthify2-tgbot
+    environment:
+      BALTHIFY2_TGBOT_TOKEN: invalid-token
+      BALTHIFY2_TGBOT_ADMIN_IDS: invalid-id-first,invalid-id-second
+      BALTHIFY2_TGBOT_INGRESS_APP: ingress
+      BALTHIFY2_TGBOT_EGRESS_APP: egress
+      BALTHIFY2_TGBOT_SCHEDULE_API_URL: http://balthify2_backend:8000/schedule/
+      BALTHIFY2_TGBOT_DATASERVER_BASE_URL: rtmp://nxdomain.example.com/
+    networks:
+      - common
+  nginx:
+    image:
+      nginx-rtmp
+    ports:
+      - 80:8080
+      - 1935:1935
+    networks:
+      - common
+    volumes:
+      - type: bind
+        source: ./nginx-logs
+        target: /opt/nginx/logs
+networks:
+  common:
+    driver: bridge
