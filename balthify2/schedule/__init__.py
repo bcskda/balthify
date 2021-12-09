@@ -30,8 +30,8 @@ async def get_record(ingress_app: str, ingress_id: str, timestamp: datetime):
         query = select(RoutingRecordOrm).filter(
             RoutingRecordOrm.ingress_app == ingress_app,
             RoutingRecordOrm.ingress_id == ingress_id,
-            #RoutingRecordOrm.start_time <= timestamp,
-            #timestamp < RoutingRecordOrm.end_time
+            RoutingRecordOrm.start_time <= timestamp,
+            timestamp < RoutingRecordOrm.end_time
         )
         result = await session.execute(query)
         records_orm = result.scalars().all()
