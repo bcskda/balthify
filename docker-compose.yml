@@ -1,42 +1,65 @@
 version: "3.2"
+
 services:
-  balthify2_backend:
+  backend:
     image:
-      balthify2-backend
+      balthify-backend:2
     environment:
       BALTHIFY2_DB_URL: sqlite+aiosqlite:////opt/balthify2/data/testing.db
-    ports:
-      - 8000:8000
+      BALTHIFY2_ACL_LOOKUP_URL: http://backend/schedule/lookup
+      BALTHIFY2_ACL_REDIRECT_DOMAIN: 127.0.0.1
     networks:
       - common
     volumes:
-      - type: bind
-        source: ./balthify2-data
-        target: /opt/balthify2/data
-  balthify2_tgbot:
+      - backend-data:/opt/balthify2/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      endpoint_mode: dnsrr
+  tgbot:
     image:
-      balthify2-tgbot
+      balthify-tgbot:2
     environment:
-      BALTHIFY2_TGBOT_TOKEN: invalid-token
-      BALTHIFY2_TGBOT_ADMIN_IDS: invalid-id-first,invalid-id-second
-      BALTHIFY2_TGBOT_INGRESS_APP: ingress
-      BALTHIFY2_TGBOT_EGRESS_APP: egress
-      BALTHIFY2_TGBOT_SCHEDULE_API_URL: http://balthify2_backend:8000/schedule/
-      BALTHIFY2_TGBOT_DATASERVER_BASE_URL: rtmp://nxdomain.example.com/
+      BALTHIFY2_TGBOT_JSON_PATH: /run/secrets/balthify2_tgbot_tokens_and_ids_json
+      BALTHIFY2_TGBOT_INGRESS_APP: publish
+      BALTHIFY2_TGBOT_EGRESS_APP: play
+      BALTHIFY2_TGBOT_SCHEDULE_API_URL: http://backend/schedule/
+      BALTHIFY2_TGBOT_DATASERVER_BASE_URL: rtmp://rtmp.example.com/
     networks:
       - common
+    deploy:
+      mode: replicated
+      replicas: 1
+    secrets:
+      - balthify2_tgbot_tokens_and_ids_json
   nginx:
     image:
-      nginx-rtmp
+      balthify-nginx:2
     ports:
-      - 80:8080
+      - 8080:80
       - 1935:1935
     networks:
       - common
-    volumes:
-      - type: bind
-        source: ./nginx-logs
-        target: /opt/nginx/logs
+      - frontend
+    deploy:
+      mode: replicated
+      replicas: 1
+
+volumes:
+  backend-data:
+
 networks:
   common:
-    driver: bridge
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 10.xx.0.0/24
+  frontend:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 10.xx.1.0/24
+
+secrets:
+  balthify2_tgbot_tokens_and_ids_json:
+    external: true

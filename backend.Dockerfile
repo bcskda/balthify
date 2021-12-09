@@ -12,4 +12,4 @@ RUN pip install --no-cache-dir -r requirements2.txt
 
 COPY balthify2 /opt/balthify2/src/balthify2
 
-CMD ["uvicorn", "--host", "0.0.0.0", "--port", "8000", "balthify2.app:app"]
+CMD ["uvicorn", "--host", "0.0.0.0", "--port", "80", "balthify2.app:app"]
