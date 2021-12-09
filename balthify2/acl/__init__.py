@@ -7,12 +7,10 @@ from tornado.httpclient import AsyncHTTPClient, HTTPRequest
 from tornado.httputil import url_concat
 
 from balthify2.common.models import RoutingRecord
+from balthify2.acl.config import Config
 
 
 router = APIRouter()
-
-
-LOOKUP_URL = 'http://127.0.0.1:8000/schedule/lookup'
 
 
 @router.post('/on_connect')
@@ -34,6 +32,7 @@ async def on_publish(
     name: str = Form(...),
 ):
     assert call == 'publish'
+    config = Config()
 
     request = {
         'ingress_app': app,
@@ -42,13 +41,13 @@ async def on_publish(
     }
     client = AsyncHTTPClient()
     response = await client.fetch(
-        url_concat(LOOKUP_URL, request),
+        url_concat(config.lookup_url, request),
         raise_error=False
     )
 
     if response.code == status.HTTP_200_OK:
         response = RoutingRecord(**json.loads(response.body))
-        redirect_to = f'rtmp://nxdomain/{response.egress_app}/{response.egress_id}'
+        redirect_to = f'rtmp://{config.redirect_domain}/{response.egress_app}/{response.egress_id}'
         return RedirectResponse(redirect_to)
     else:
         raise HTTPException(

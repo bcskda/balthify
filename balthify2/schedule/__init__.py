@@ -18,8 +18,9 @@ router = APIRouter()
 
 
 def random_id(length: int):
-    urandom_bytes = math.ceil(3 / 4 * length)
-    rnd = base64.b64encode(os.urandom(urandom_bytes))
+    urandom_bytes_cnt = math.ceil(3 / 4 * length)
+    urandom_bytes = os.urandom(urandom_bytes_cnt)
+    rnd = base64.b64encode(urandom_bytes, altchars=b'_-').decode('utf-8')
     return rnd[:length]
 
 
@@ -29,8 +30,8 @@ async def get_record(ingress_app: str, ingress_id: str, timestamp: datetime):
         query = select(RoutingRecordOrm).filter(
             RoutingRecordOrm.ingress_app == ingress_app,
             RoutingRecordOrm.ingress_id == ingress_id,
-            RoutingRecordOrm.start_time <= timestamp,
-            timestamp < RoutingRecordOrm.end_time
+            #RoutingRecordOrm.start_time <= timestamp,
+            #timestamp < RoutingRecordOrm.end_time
         )
         result = await session.execute(query)
         records_orm = result.scalars().all()
