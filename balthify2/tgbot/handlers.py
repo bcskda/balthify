@@ -56,9 +56,16 @@ class ScheduleHandler:
         title, start_time, end_time = command_args[:3]
         description = ' '.join(command_args[3:])
 
+        start_time=dateutil_parse(start_time)
+        end_time=dateutil_parse(end_time)
+        if start_time.tzinfo is None or end_time.tzinfo is None:
+            raise ValueError('Timezone must be explicitly specified')
+        elif start_time.tzinfo != end_time.tzinfo:
+            raise ValueError('Start and end timezones must match')
+
         return RoutingRecordUserConfigurable(
-            start_time=dateutil_parse(start_time),
-            end_time=dateutil_parse(end_time),
+            start_time=start_time,
+            end_time=end_time,
             title=title,
             description=description,
             ingress_app=config().ingress_app,

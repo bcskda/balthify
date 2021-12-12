@@ -1,5 +1,5 @@
 import typing as tp
-from datetime import datetime
+from datetime import datetime, timezone
 
 from pydantic import BaseModel, constr, validator
 from sqlalchemy import Column, ForeignKey, MetaData, Sequence
@@ -32,6 +32,14 @@ class RoutingRecordUserConfigurable(BaseModel):
     description: constr(max_length=300)
     ingress_app: constr(max_length=32)
     egress_app: constr(max_length=32)
+
+    @validator('start_time')
+    def start_time_to_utc(cls, v):
+        return v.astimezone(timezone.utc)
+
+    @validator('end_time')
+    def end_time_to_utc(cls, v):
+        return v.astimezone(timezone.utc)
 
     @validator('end_time')
     def end_time_after_start_time(cls, v, values):
